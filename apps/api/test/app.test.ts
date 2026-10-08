@@ -5,7 +5,12 @@ import { ExamplesService } from '../src/examples/examples.service.js';
 import type { ExamplesRepository } from '../src/examples/examples.repository.js';
 import type { AppInstance } from '../src/types.js';
 
-const uniqueViolation = Object.assign(new Error('duplicate key'), { code: '23505' });
+// Mirrors how Drizzle wraps a driver error: the SQLSTATE sits on the cause, not the top level.
+const uniqueViolation = Object.assign(new Error('query failed'), {
+  cause: Object.assign(new Error('duplicate key value violates unique constraint'), {
+    code: '23505',
+  }),
+});
 
 /** Fake repository: the service's error branches are unit-testable without a database. */
 const fakeRepo = (overrides: Partial<ExamplesRepository> = {}) =>

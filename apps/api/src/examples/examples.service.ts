@@ -34,5 +34,14 @@ export class ExamplesService {
   }
 }
 
-const isUniqueViolation = (err: unknown): boolean =>
-  typeof err === 'object' && err !== null && 'code' in err && err.code === '23505';
+/**
+ * PostgreSQL unique-violation SQLSTATE.
+ * Drizzle wraps driver errors, so the code can sit several `cause` levels down.
+ */
+const UNIQUE_VIOLATION = '23505';
+
+const isUniqueViolation = (err: unknown, depth = 0): boolean => {
+  if (typeof err !== 'object' || err === null || depth > 5) return false;
+  if ('code' in err && err.code === UNIQUE_VIOLATION) return true;
+  return 'cause' in err ? isUniqueViolation(err.cause, depth + 1) : false;
+};
